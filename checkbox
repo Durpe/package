@@ -1,0 +1,20 @@
+from tkinter import *
+from tkinter import messagebox
+
+master = Tk()
+
+def show():
+    if var1.get() == 1:
+        messagebox.showinfo('信息', '刘德鹏最帅')
+    if var2.get() == 1:
+        messagebox.showinfo('信息', '刘德鹏最屌')
+
+Label(master, text="Your sex:").grid(row=0, sticky=W)
+var1 = IntVar()
+Checkbutton(master, text="male", variable=var1).grid(row=1, sticky=W)
+var2 = IntVar()
+
+Checkbutton(master, text="female", variable=var2).grid(row=2, sticky=W)
+
+Button(master, text='Show', command=show).grid(row=4, sticky=W, pady=4)
+mainloop()
