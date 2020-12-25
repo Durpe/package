@@ -1,0 +1,17 @@
+# list1 = [34,2,35,2,5,324,1,35,1,5,234,4,34,54,35,7,2,5,7,1,5,72,82]
+list1 = [34, 2, 35]
+i = 0
+
+for a in range(0, len(list1)):
+    flag = False
+    i += 1
+    for b in range(len(list1), -1, -1):
+        i += 1
+        if list1[a] < list1[b]:
+            list1[a], list1[b] = list1[b], list1[a]
+            flag = True
+
+    if not flag:
+        break
+print(list1)
+print(i)
