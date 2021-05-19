@@ -1,0 +1,900 @@
+# -*- coding: utf-8 -*- 
+
+import math
+from PublicFunction import *
+
+# 求点到直线的距离，最后一个参数代表是求到线段的距离还是直线的距离(True为线段，False为直线)
+def pntToLineDist(p_in,line_end,isreal=False):
+    pnt_on_line = getPntOnline(p_in,line_end)
+    if not isreal:
+        return twod3Dist(p_in,pnt_on_line)
+    if isPntOnLine(pnt_on_line,line_end,False):
+        return twod3Dist(p_in,pnt_on_line)
+    d1 = twod3Dist(p_in,line_end[0])
+    d2 = twod3Dist(p_in,line_end[1])
+    dist = d1 if d1<d2 else d2
+    return dist
+
+# 判断点是不是在线段内(False为线段，True为直线)
+def isPntOnLine(p_in,line_end,flag_in=True):
+    precision = 0.01
+    p_on = getPntOnline(p_in,line_end)
+    if twod3Dist(p_in,p_on)>precision:
+        return False
+    if flag_in:
+        return True
+    v1 = d3Cut(line_end[0],p_on)
+    v2 = d3Cut(line_end[1],p_on)
+    if d3Length(v1)<precision or d3Length(v2)<precision:
+        return True
+    angle = vectCos(v1,v2)
+    if abs(angle+1)<precision:
+        return True
+    return False
+
+# 求两个向量夹角的余弦值
+def vectCos(v1,v2):
+    return d3Multiple(v1,v2)/(d3Length(v1)*d3Length(v2))
+
+# 得到一个点在线上的投影点
+def getPntOnline(p_in,line_end):
+    pf = d3Cut(line_end[1],line_end[0])
+    n = (pf[0]*(p_in[0]-line_end[0][0])+pf[1]*(p_in[1]-line_end[0][1])+pf[2]*(p_in[2]-line_end[0][2]))/(pf[0]*pf[0]+pf[1]*pf[1]+pf[2]*pf[2])
+    return [n*pf[0]+line_end[0][0],n*pf[1]+line_end[0][1],n*pf[2]+line_end[0][2]]
+
+# 得到两个点之间的距离
+def twod3Dist(p1,p2):
+    return d3Length(d3Cut(p2,p1))
+
+# 点相减
+def d3Cut(p1,p2):
+    return [p1[0]-p2[0],p1[1]-p2[1],p1[2]-p2[2]]
+
+# 向量的长度
+def d3Length(p_in):
+    return math.sqrt(d3Multiple(p_in,p_in))
+
+# 点相乘
+def d3Multiple(p1,p2):
+    return p1[0]*p2[0]+p1[1]*p2[1]+p1[2]*p2[2]
+
+# 求空间两直线的最短距离,输入两个直线段点
+def getTwoLineMinDis(p1,p2):
+    # 线段1起点赋值
+    x1 = p1[0][0]
+    y1 = p1[0][1]
+    z1 = p1[0][2]
+    # 线段1终点赋值
+    x2 = p1[1][0]
+    y2 = p1[1][1]
+    z2 = p1[1][2]
+    # 线段2起点赋值
+    x3 = p2[0][0]
+    y3 = p2[0][1]
+    z3 = p2[0][2]
+    # 线段2终点赋值
+    x4 = p2[1][0]
+    y4 = p2[1][1]
+    z4 = p2[1][2]
+    # 定义中间变量，简化计算表达式
+    a1 = x4-x3
+    b1 = x2-x1
+    c1 = x3-x1
+    
+    a2 = y4-y3
+    b2 = y2-y1
+    c2 = y3-y1
+    
+    a3 = z4-z3
+    b3 = z2-z1
+    c3 = z3-z1
+    
+    l1 = (b1*b1)+(b2*b2)+(b3*b3)
+    m1 = a1*b1+a2*b2+a3*b3
+    n1 = b1*c1+b2*c2+b3*c3
+    
+    l2 = m1
+    m2 = (a1*a1)+(a2*a2)+(a3*a3)
+    n2 = a1*c1+a2*c2+a3*c3
+    
+    # 如果平行，返回False
+    if fcmp((l1*m2 - l2*m1),0)==0:
+        return False
+    
+    # 求解偏导数方程组，计算得出s,t的值
+    s = (m2*n1-m1*n2)/(l1*m2-l2*m1)
+    t = (l2*n1-l1*n2)/(l1*m2-l2*m1)
+    # 计算线段1所在直线与线段2所在直线上距离最小的2个点px,qx
+    px = x1+s*b1
+    py = y1+s*b2
+    pz = z1+s*b3
+    qx = x3+t*a1
+    qy = y3+t*a2
+    qz = z3+t*a3
+    # 计算线段1所在直线与线段2所在直线之间的最小距离
+    d = pow((qx-px)*(qx-px)+(qy-py)*(qy-py)+(qz-pz)*(qz-pz),0.5)
+    return d
+
+# 求空间两直线的最短距离的点,输入两个直线段点
+def getTwoLineMinDisPnt(p1,p2):
+    # 线段1起点赋值
+    x1 = p1[0][0]
+    y1 = p1[0][1]
+    z1 = p1[0][2]
+    # 线段1终点赋值
+    x2 = p1[1][0]
+    y2 = p1[1][1]
+    z2 = p1[1][2]
+    # 线段2起点赋值
+    x3 = p2[0][0]
+    y3 = p2[0][1]
+    z3 = p2[0][2]
+    # 线段2终点赋值
+    x4 = p2[1][0]
+    y4 = p2[1][1]
+    z4 = p2[1][2]
+    # 定义中间变量，简化计算表达式
+    a1 = x4 - x3
+    b1 = x2 - x1
+    c1 = x3 - x1
+
+    a2 = y4 - y3
+    b2 = y2 - y1
+    c2 = y3 - y1
+
+    a3 = z4 - z3
+    b3 = z2 - z1
+    c3 = z3 - z1
+
+    l1 = (b1*b1) + (b2*b2) + (b3*b3)
+    m1 = a1*b1 + a2*b2 + a3*b3
+    n1 = b1*c1 + b2*c2 + b3*c3
+
+    l2 = m1
+    m2 = (a1*a1) + (a2*a2) + (a3*a3)
+    n2 = a1*c1 + a2*c2 + a3*c3
+
+    # 如果平行，返回False
+    if fcmp((l1*m2 - l2*m1),0)==0:
+        return False
+    
+    # 求解偏导数方程组，计算得出s,t的值
+    s = (m2*n1 - m1*n2) / (l1*m2 - l2*m1)
+    t = (l2*n1 - l1*n2) / (l1*m2 - l2*m1)
+
+    # 计算线段1所在直线与线段2所在直线上距离最小的2个点px,qx
+    px = x1 + s*b1
+    py = y1 + s*b2
+    pz = z1 + s*b3
+    qx = x3 + t*a1
+    qy = y3 + t*a2
+    qz = z3 + t*a3
+    return [[px,py,pz],[qx,qy,qz]]
+
+# 计算两个向量夹角(返回1表示0度，返回0表示垂直，返回-1表示180度)
+def getTwoVectorAngle(vect1,vect2):
+    vect1Length = math.sqrt(vect1[0]*vect1[0]+vect1[1]*vect1[1]+vect1[2]*vect1[2])
+    vect2Length = math.sqrt(vect2[0]*vect2[0]+vect2[1]*vect2[1]+vect2[2]*vect2[2])
+    unitVect1 = []
+    unitVect2 = []
+    for i in range(0,3):
+        unitVect1.append(vect1[i]/vect1Length)
+        unitVect2.append(vect2[i]/vect2Length)
+    return unitVect1[0]*unitVect2[0]+unitVect1[1]*unitVect2[1]+unitVect1[2]*unitVect2[2]
+
+# 计算同一平面内两个线段的最短距离
+def getTwoLineMinDisOnSameSurface(line1,line2):
+    # 求两线段所在直线的最短距离点（这里是同一面内，即为求交点）
+    minDisPnt = getTwoLineMinDisPnt(line1,line2)
+    # 如果是False（平行）、任一交点不在对应线段上，最短距离即为四端点到对面的边距离最短的那个距离
+    if minDisPnt is False or not isPntOnLine(minDisPnt[0],line1,False) or not isPntOnLine(minDisPnt[1],line2,False):
+        distance = []
+        distance.append(pntToLineDist(line1[0],line2,True))
+        distance.append(pntToLineDist(line1[1],line2,True))
+        distance.append(pntToLineDist(line2[0],line1,True))
+        distance.append(pntToLineDist(line2[1],line1,True))
+        minDis = -1
+        for d in distance:
+            if minDis==-1:
+                minDis = d
+            else:
+                if d<minDis:
+                    minDis=d
+        return minDis        
+    # 反之表示两线段相交，最短距离即为0
+    else:
+        return 0
+
+# 计算空间中两个线段的最短距离
+def getTwoLineMinDisInSpace(line1,line2):
+    # 求两线段所在直线的最短距离点
+    minDisPnt = getTwoLineMinDisPnt(line1,line2)
+    # 如果是False（平行）、任一交点不在对应线段上，最短距离即为四端点到对面的边距离最短的那个距离
+    if minDisPnt is False or not isPntOnLine(minDisPnt[0],line1,False) or not isPntOnLine(minDisPnt[1],line2,False):
+        distance = []
+        distance.append(pntToLineDist(line1[0],line2,True))
+        distance.append(pntToLineDist(line1[1],line2,True))
+        distance.append(pntToLineDist(line2[0],line1,True))
+        distance.append(pntToLineDist(line2[1],line1,True))
+        minDis = -1
+        for d in distance:
+            if minDis==-1:
+                minDis = d
+            else:
+                if d<minDis:
+                    minDis=d
+        return minDis        
+    # 反之最短距离为两最短距离点的距离
+    else:
+        return twod3Dist(minDisPnt[0],minDisPnt[1])
+
+# 计算空间中线段和直线的最短距离
+def getSegmentToLineMinDisInSpace(segment,line):
+    # 求两条线所在直线的最短距离点
+    minDisPnt = getTwoLineMinDisPnt(segment,line)
+    # 如果是False（平行）、交点1不在线段上，最短距离即为线段两端点到直线更短的那个距离
+    if minDisPnt is False or not isPntOnLine(minDisPnt[0], segment, False):
+        dis1 = pntToLineDist(segment[0], line)
+        dis2 = pntToLineDist(segment[1], line)
+        minDis = dis1 if dis1 < dis2 else dis2
+        return minDis
+        # 反之最短距离为两最短距离点的距离
+    else:
+        return twod3Dist(minDisPnt[0], minDisPnt[1])
+
+# 点是不是在平面上
+def isPntOnSurf(p_in,surf_pnt,surf_dir):
+    tempVect = d3Cut(p_in,surf_pnt)
+    if abs(d3Multiple(tempVect,surf_dir))<0.01:
+        return True
+    else:
+        return False
+
+# 计算点在面上的投影（在三个点组成的面上投影，surface是面上的三个点列表）
+def getPntOnSrf(p_in,surface):
+    surf_dir = getNormalVector(surface[0],surface[1],surface[2])
+    surf_pnt = surface[0]
+    n = ((p_in[0]-surf_pnt[0])*surf_dir[0]+(p_in[1]-surf_pnt[1])*surf_dir[1]+(p_in[2]-surf_pnt[2])*surf_dir[2])/(surf_dir[0]*surf_dir[0]+surf_dir[1]*surf_dir[1]+surf_dir[2]*surf_dir[2])
+    x = p_in[0] - n*surf_dir[0]
+    y = p_in[1] - n*surf_dir[1]
+    z = p_in[2] - n*surf_dir[2]
+    return [x,y,z]
+
+# 计算点在面上的投影（在一个点和法向量组成的面上投影，surf_pnt是面上的任意一点，surf_dir是面的法向量）
+def getPntOnSrfByVector(p_in,surf_pnt,surf_dir):
+    n = ((p_in[0]-surf_pnt[0])*surf_dir[0]+(p_in[1]-surf_pnt[1])*surf_dir[1]+(p_in[2]-surf_pnt[2])*surf_dir[2])/(surf_dir[0]*surf_dir[0]+surf_dir[1]*surf_dir[1]+surf_dir[2]*surf_dir[2])
+    x = p_in[0] - n*surf_dir[0]
+    y = p_in[1] - n*surf_dir[1]
+    z = p_in[2] - n*surf_dir[2]
+    return [x,y,z]
+
+# 计算点到面的距离（surface是面上的三个点列表）
+def getPntToSrfDis(p_in,surface):
+    return twod3Dist(p_in,getPntOnSrf(p_in,surface))
+
+# 计算点到面的距离（surf_pnt是面上的任意一点，surf_dir是面的法向量）
+def getPntToSrfDisByVector(p_in,surf_pnt,surf_dir):
+    return twod3Dist(p_in,getPntOnSrfByVector(p_in,surf_pnt,surf_dir))
+
+# 计算同轴的两条线段重叠部分的距离
+def getTwoLinesOverlapDis(line1,line2):
+    # 定义标识，表示四个点是否在对面线段内
+    line1P1IsOnline = False
+    line1P2IsOnline = False
+    line2P1IsOnline = False
+    line2P2IsOnline = False
+    # 定义点集合，存储在对面线段内的点
+    onlinePnts = []
+    # 分别计算线段1两点、线段2两点在不在对面线段内，在就改变对应点的标识为True，并把点存入onlinePnts
+    if isPntOnLine(line1[0], line2, False):
+        line1P1IsOnline = True
+        onlinePnts.append(line1[0])
+    if isPntOnLine(line1[1], line2, False):
+        line1P1IsOnline = True
+        onlinePnts.append(line1[1])
+    if isPntOnLine(line2[0], line1, False):
+        line2P1IsOnline = True
+        onlinePnts.append(line2[0])
+    if isPntOnLine(line2[1], line1, False):
+        line2P2IsOnline = True
+        onlinePnts.append(line2[1])
+    # 分不同情况计算旋合长度
+    # 第一种情况：四个点中有两个点在对面线段内
+    if len(onlinePnts) == 2:
+        # 此时有多种可能，但不论是哪种，重叠长度都是这两点的距离
+        overlapDis = twod3Dist(onlinePnts[0], onlinePnts[1])
+    # 第二种情况：四个点中有三个点在对面线段内
+    elif len(onlinePnts) == 3:
+        # 此时有多种可能，但可以分为两大类
+        if line1P1IsOnline and line1P2IsOnline:
+            # 线段1两点都在线段2内，重叠长度即为线段1的长度
+            overlapDis = twod3Dist(line1[0], line1[1])
+        else:
+            # 反之，线段2两点都在线段1内，重叠长度即为线段2的长度
+            overlapDis = twod3Dist(line2[0], line2[1])
+    # 第三种情况：四个点都在对面线段内
+    elif len(onlinePnts) == 4:
+        # 此时线段1和2完全相同，重叠长度即为线段1或2的长度
+        overlapDis = twod3Dist(line1[0], line1[1])
+    # 其它情况：四个点都不在对面线段内或轴线不重合
+    else:
+        # 此时没有重叠，重叠长度为0
+        overlapDis = 0
+    return overlapDis
+
+# 判断两个面是否共面（surf_pnts是第一个面的三个点列表，surf_pnt是第二个面上任意一点，surf_dir是第二个面法向量）
+def srfOnSrfByVector(surf_pnts,surf_pnt,surf_dir):
+    number = 0
+    for pnt in surf_pnts:
+        # 循环第一个面的三个点，如果三个点到第二个面的距离都为0，则表示共面
+        # 由于catia获取轮廓会有固定0.1的偏差（大0.1或小0.1），如果距离为0.1或0.2也是贴合的
+        if fcmp(getPntToSrfDisByVector(pnt, surf_pnt, surf_dir), 0) == 0 or \
+        fcmp(getPntToSrfDisByVector(pnt, surf_pnt, surf_dir), 0.1) == 0 or \
+        fcmp(getPntToSrfDisByVector(pnt, surf_pnt, surf_dir), 0.2) == 0:
+            number+=1
+    if number==3:
+        return True
+    else:
+        return False
+
+# 判断长方体（轮廓）是否和面相贴合（outline是轮廓，surface是面上的三个点列表）
+def outlineOnSrf(outline,surface):
+    pnts = get8pntsFromOutLine(outline)
+    number = 0 # 到面距离为0的点数
+    for p in pnts:
+        if fcmp(getPntToSrfDis(p,surface),0)==0:
+            number+=1
+    # 有4个点到面距离为0，表示贴合，反之不贴合
+    if number==4:
+        return True
+    else:
+        return False
+
+# 判断长方体（轮廓）是否和面相贴合（outline是轮廓，surf_pnt是面上的任意一点，surf_dir是面的法向量）
+def outlineOnSrfByVector(outline,surf_pnt,surf_dir):
+    pnts = get8pntsFromOutLine(outline)
+    number = 0 # 到面距离为0的点数
+    for p in pnts:
+        if fcmp(getPntToSrfDisByVector(p,surf_pnt,surf_dir),0)==0:
+            number+=1
+    # 有4个点到面距离为0，表示贴合，反之不贴合
+    if number==4:
+        return True
+    else:
+        return False
+
+# 判断长方体（8个点）是否和面相贴合（pnts是8个点的列表，surface是面上的三个点列表）
+def cuboidOnSrf(pnts,surface):
+    number = 0 # 到面距离为0的点数
+    for p in pnts:
+        if fcmp(getPntToSrfDis(p,surface),0)==0:
+            number+=1
+    # 有4个点到面距离为0，表示贴合，反之不贴合
+    if number==4:
+        return True
+    else:
+        return False
+
+# 判断长方体（8个点）是否和面相贴合（pnts是8个点的列表，surf_pnt是面上的任意一点，surf_dir是面的法向量）
+def cuboidOnSrfByVector(pnts,surf_pnt,surf_dir):
+    number = 0 # 到面距离为0的点数
+    for p in pnts:
+        if fcmp(getPntToSrfDisByVector(p,surf_pnt,surf_dir),0)==0:
+            number+=1
+    # 有4个点到面距离为0，表示贴合，反之不贴合
+    if number==4:
+        return True
+    else:
+        return False
+
+# 计算长方体（轮廓）投影到面（贴合或正对的面）的四个点（按顺时针或逆时针顺序排列）（outline是轮廓，surface是面上的三个点列表）
+def getOutlineDropToSrf4Pnts(outline,surface):
+    pnts = get8pntsFromOutLine(outline)
+    shadow8pnts = []
+    for p in pnts:
+        shadow8pnts.append(getPntOnSrf(p,surface))
+    return get4DiffPntsFrom8Pnts(shadow8pnts)
+
+# 计算长方体（轮廓）投影到面（贴合或正对的面）的四个点（按顺时针或逆时针顺序排列）（outline是轮廓，surf_pnt是面上的任意一点，surf_dir是面的法向量）
+def getOutlineDropToSrf4PntsByVector(outline,surf_pnt,surf_dir):
+    pnts = get8pntsFromOutLine(outline)
+    shadow8pnts = []
+    for p in pnts:
+        shadow8pnts.append(getPntOnSrfByVector(p,surf_pnt,surf_dir))
+    return get4DiffPntsFrom8Pnts(shadow8pnts)
+
+# 计算长方体（8个点）投影到面（贴合或正对的面）的四个点（按顺时针或逆时针顺序排列）（pnts是8个点的列表，surface是面上的三个点列表）
+def getCuboidDropToSrf4Pnts(pnts,surface):
+    shadow8pnts = []
+    for p in pnts:
+        shadow8pnts.append(getPntOnSrf(p,surface))
+    return get4DiffPntsFrom8Pnts(shadow8pnts)
+
+# 计算长方体（8个点）投影到面（贴合或正对的面）的四个点（按顺时针或逆时针顺序排列）（pnts是8个点的列表，surf_pnt是面上的任意一点，surf_dir是面的法向量）
+def getCuboidDropToSrf4PntsByVector(pnts,surf_pnt,surf_dir):
+    shadow8pnts = []
+    for p in pnts:
+        shadow8pnts.append(getPntOnSrfByVector(p,surf_pnt,surf_dir))
+    return get4DiffPntsFrom8Pnts(shadow8pnts)
+
+# 计算三个点组成的面的法向量
+def getNormalVector(p1,p2,p3):
+    vector1 = d3Cut(p1,p2)
+    vector2 = d3Cut(p1,p3)
+    x = vector1[1]*vector2[2] - vector2[1]*vector1[2]
+    y = -vector1[0]*vector2[2] + vector2[0]*vector1[2]
+    z = vector1[0]*vector2[1] - vector2[0]*vector1[1]
+    return [x,y,z]
+
+# 将轮廓两点x/y/z拆开，小的x/y/z组成一个新点，大的x/y/z组成一个新点，两新点组成线段返回
+def getMinMaxOutLine(outline):
+    if fcmp(outline[0][0],outline[1][0])<=0:
+        minX = outline[0][0]
+        maxX = outline[1][0]
+    else:
+        minX = outline[1][0]
+        maxX = outline[0][0]
+    if fcmp(outline[0][1],outline[1][1])<=0:
+        minY = outline[0][1]
+        maxY = outline[1][1]
+    else:
+        minY = outline[1][1]
+        maxY = outline[0][1]
+    if fcmp(outline[0][2],outline[1][2])<=0:
+        minZ = outline[0][2]
+        maxZ = outline[1][2]
+    else:
+        minZ = outline[1][2]
+        maxZ = outline[0][2]
+    return [[minX,minY,minZ],[maxX,maxY,maxZ]]
+
+# 计算一堆点的最大最小x/y/x值
+def getMinMaxXYZFromPnts(pnts):
+    minX = pnts[0][0]
+    maxX = pnts[0][0]
+    minY = pnts[0][1]
+    maxY = pnts[0][1]
+    minZ = pnts[0][2]
+    maxZ = pnts[0][2]
+    for p in pnts:
+        if p[0]<minX:
+            minX = p[0]
+        if p[0]>maxX:
+            maxX = p[0]
+        if p[1]<minY:
+            minY = p[1]
+        if p[1]>maxY:
+            maxY = p[1]
+        if p[2]<minZ:
+            minZ = p[2]
+        if p[2]>maxZ:
+            maxZ = p[2]
+    return [[minX,minY,minZ],[maxX,maxY,maxZ]]
+
+# 判断A最大最小x/y/x坐标是否被B最大最小x/y/x坐标包住（判断A在B的里面）
+def minMaxAInMinMaxB(minMaxA,minMaxB):
+    result = False
+    if fcmp(minMaxB[0][0],minMaxA[0][0])<=0 and fcmp(minMaxB[0][1],minMaxA[0][1])<=0 and fcmp(minMaxB[0][2],minMaxA[0][2])<=0 \
+    and fcmp(minMaxB[1][0],minMaxA[1][0])>=0 and fcmp(minMaxB[1][1],minMaxA[1][1])>=0 and fcmp(minMaxB[1][2],minMaxA[1][2])>=0:
+        result = True
+    return result
+
+# 根据左下、右上轮廓点坐标计算轮廓8个点坐标（只能求出正着的长方体8个点，斜着的求不出）
+#            7-----------8
+#           /|          /|
+#          5-|-------- 6 |
+#          | 3---------|-4
+#          |/          |/
+#          1-----------2
+def get8pntsFromOutLine(outline):
+    minMaxOutLine = getMinMaxOutLine(outline)
+    minX = minMaxOutLine[0][0]
+    maxX = minMaxOutLine[1][0]
+    minY = minMaxOutLine[0][1]
+    maxY = minMaxOutLine[1][1]
+    minZ = minMaxOutLine[0][2]
+    maxZ = minMaxOutLine[1][2]
+    pnt1 = [minX,minY,minZ]
+    pnt2 = [maxX,minY,minZ]
+    pnt3 = [minX,maxY,minZ]
+    pnt4 = [maxX,maxY,minZ]
+    pnt5 = [minX,minY,maxZ]
+    pnt6 = [maxX,minY,maxZ]
+    pnt7 = [minX,maxY,maxZ]
+    pnt8 = [maxX,maxY,maxZ]
+    return [pnt1,pnt2,pnt3,pnt4,pnt5,pnt6,pnt7,pnt8]
+
+# 根据左下、右上轮廓点坐标计算轮廓12条边（只能求出正着的长方体12条边，斜着的求不出）
+#            7-----------8
+#           /|          /|
+#          5-|-------- 6 |
+#          | 3---------|-4
+#          |/          |/
+#          1-----------2
+def get12linesFromOutLine(outline):
+    lines = []
+    pnts = get8pntsFromOutLine(outline)
+    line = {}
+    line['startpnt'] = pnts[0]
+    line['endpnt'] = pnts[1]
+    lines.append(line)
+    line = {}
+    line['startpnt'] = pnts[1]
+    line['endpnt'] = pnts[3]
+    lines.append(line)
+    line = {}
+    line['startpnt'] = pnts[3]
+    line['endpnt'] = pnts[2]
+    lines.append(line)
+    line = {}
+    line['startpnt'] = pnts[2]
+    line['endpnt'] = pnts[0]
+    lines.append(line)
+    line = {}
+    line['startpnt'] = pnts[0]
+    line['endpnt'] = pnts[4]
+    lines.append(line)
+    line = {}
+    line['startpnt'] = pnts[1]
+    line['endpnt'] = pnts[5]
+    lines.append(line)
+    line = {}
+    line['startpnt'] = pnts[2]
+    line['endpnt'] = pnts[6]
+    lines.append(line)
+    line = {}
+    line['startpnt'] = pnts[3]
+    line['endpnt'] = pnts[7]
+    lines.append(line)
+    line = {}
+    line['startpnt'] = pnts[4]
+    line['endpnt'] = pnts[5]
+    lines.append(line)
+    line = {}
+    line['startpnt'] = pnts[5]
+    line['endpnt'] = pnts[7]
+    lines.append(line)
+    line = {}
+    line['startpnt'] = pnts[7]
+    line['endpnt'] = pnts[6]
+    lines.append(line)
+    line = {}
+    line['startpnt'] = pnts[6]
+    line['endpnt'] = pnts[4]
+    lines.append(line)
+    return lines
+
+# 判断外形是否大于等于指定间隙，True小于，False大于等于
+# 判断两个轮廓是否相交，请设置GAP == 0，True相交，False不相交
+def outlineComp(outline1,outline2,gap=0):
+    newOutLine1 = getMinMaxOutLine(outline1)
+    newOutLine2 = getMinMaxOutLine(outline2)
+    bOut = False
+    if isOutGap(newOutLine1[0][0],newOutLine1[1][0],newOutLine2[0][0],newOutLine2[1][0],gap) is False \
+    and isOutGap(newOutLine1[0][1],newOutLine1[1][1],newOutLine2[0][1],newOutLine2[1][1],gap) is False \
+    and isOutGap(newOutLine1[0][2],newOutLine1[1][2],newOutLine2[0][2],newOutLine2[1][2],gap) is False:
+        bOut = True
+    return bOut
+
+# 指定坐标方向大于等于指定间隙
+def isOutGap(x1,x2,x3,x4,gap):
+    bOutGap = False
+    if x1>x2:
+        t=x1
+        x1=x2
+        x2=t
+    if x3>x4:
+        t=x3
+        x3=x4
+        x4=t
+    if fcmp(x1,x3)<0:
+        if (x3-x2)>gap:
+            bOutGap=True
+    else:
+        if (x1-x4)>gap:
+            bOutGap=True
+    return bOutGap
+
+# 计算长方体8个顶点坐标投影到面后的4个点坐标（因为会两两重复，去完重只剩下4个），再将坐标按顺时针或逆时针顺序排列
+def get4DiffPntsFrom8Pnts(pnts):
+    # 去重，去掉4个，剩下4个
+    pntList = []
+    for pnt in pnts:
+        notInPntList = True
+        for p in pntList:
+            if fcmp(twod3Dist(pnt,p),0)==0:
+                notInPntList = False
+                break
+        if notInPntList is True:
+            pntList.append(pnt)
+    # 按顺时针或逆时针顺序排列
+    # 先判断是否剩下4个，不是说明数据有误，要排除掉
+    if len(pntList)==4:
+        # 用第1个点分别连2/3/4点，得到三条线段，计算三条线段的向量
+        vertor1 = d3Cut(pntList[0],pntList[1])
+        vertor2 = d3Cut(pntList[0],pntList[2])
+        vertor3 = d3Cut(pntList[0],pntList[3])
+        if fcmp(getTwoVectorAngle(vertor1,vertor2),0)==0:
+            pnts = [pntList[0],pntList[1],pntList[3],pntList[2]]
+        elif fcmp(getTwoVectorAngle(vertor1,vertor3),0)==0:
+            pnts = [pntList[0],pntList[1],pntList[2],pntList[3]]
+        elif fcmp(getTwoVectorAngle(vertor2,vertor3),0)==0:
+            pnts = [pntList[0],pntList[2],pntList[1],pntList[3]]
+        else:
+            pnts = []
+        return pnts
+    else:  
+        return []
+
+# 判断同面上的矩形和不规则封闭图形是否干涉（pnts是组成矩形的4个点-按顺、逆时针排的，outside是不规则封闭图形的边的列表）
+# 返回True表示干涉，False不干涉
+def rectangleCrossClosedFigureOnSameSurface(pnts,outside):
+    line1 = [pnts[0],pnts[1]]
+    line2 = [pnts[1],pnts[2]]
+    line3 = [pnts[2],pnts[3]]
+    line4 = [pnts[3],pnts[0]]
+    # 定义标识，表示矩形和不规则封闭图形各边都不干涉
+    errFlag = False
+    # 循环丝印下的边
+    for e in outside:
+        # 如果edgetype为2，是线段，判断四个边和线段是否有交点
+        if e['edgetype']==2:
+            edge = [e['startpnt'],e['endpnt']]
+            if fcmp(getTwoLineMinDisOnSameSurface(line1,edge),0)==0 \
+            or fcmp(getTwoLineMinDisOnSameSurface(line2,edge),0)==0 \
+            or fcmp(getTwoLineMinDisOnSameSurface(line3,edge),0)==0 \
+            or fcmp(getTwoLineMinDisOnSameSurface(line4,edge),0)==0:
+                errFlag = True
+                break
+        # 如果edgetype为3，是圆弧，判断四个边和圆弧分割出的两线段是否有交点
+        if e['edgetype']==3:
+            edge1 = [e['startpnt'],e['middlepnt']]
+            edge2 = [e['middlepnt'],e['endpnt']]
+            if fcmp(getTwoLineMinDisOnSameSurface(line1,edge1),0)==0 \
+            or fcmp(getTwoLineMinDisOnSameSurface(line2,edge1),0)==0 \
+            or fcmp(getTwoLineMinDisOnSameSurface(line3,edge1),0)==0 \
+            or fcmp(getTwoLineMinDisOnSameSurface(line4,edge1),0)==0 \
+            or fcmp(getTwoLineMinDisOnSameSurface(line1,edge2),0)==0 \
+            or fcmp(getTwoLineMinDisOnSameSurface(line2,edge2),0)==0 \
+            or fcmp(getTwoLineMinDisOnSameSurface(line3,edge2),0)==0 \
+            or fcmp(getTwoLineMinDisOnSameSurface(line4,edge2),0)==0:
+                errFlag = True
+                break
+        # 如果edgetype为5，是圆，判断四个边到圆心距离是否小于半径
+        if e['edgetype']==5:
+            if fcmp(pntToLineDist(e['centerpnt'],line1,True),e['raduis'])<=0 \
+            or fcmp(pntToLineDist(e['centerpnt'],line2,True),e['raduis'])<=0 \
+            or fcmp(pntToLineDist(e['centerpnt'],line3,True),e['raduis'])<=0 \
+            or fcmp(pntToLineDist(e['centerpnt'],line4,True),e['raduis'])<=0:
+                errFlag = True
+                break
+        # 如果edgetype为12，是不规则形状，循环linedata判断各分割线和四个边是否有交点
+        if e['edgetype']==12:
+            # 定义标识，表示不规则形状与扩展后标签四个边无交点
+            lineType12Flag = False
+            for linedata in e['linedata']:
+                edge = [linedata['startpnt'],linedata['endpnt']]
+                if fcmp(getTwoLineMinDisOnSameSurface(line1,edge),0)==0 \
+                or fcmp(getTwoLineMinDisOnSameSurface(line2,edge),0)==0 \
+                or fcmp(getTwoLineMinDisOnSameSurface(line3,edge),0)==0 \
+                or fcmp(getTwoLineMinDisOnSameSurface(line4,edge),0)==0:
+                    lineType12Flag = True
+                    break
+            if lineType12Flag is True:
+                errFlag = True
+                break
+    return errFlag
+
+# 将线段、圆弧、圆、不规则边全部转为线段列表，用于求距离
+def turnEdgesToLines(edges,hasCondition=False,conditionKey=['bendorfree'],conditionVal=['freeedge']):
+    lines = []
+    for k,v in edges.items():
+        # 只有值为字典的才有可能是边，不是的过滤掉
+        if isinstance(v,dict):
+            # 只有edgetype存在才是边，不是边的过滤掉
+            if keysInDict(v,['edgetype']):
+                # 如果有筛选条件
+                if hasCondition:
+                    # 以conditionKey和conditionVal为筛选条件的键名和键值来过滤
+                    passNumber = 0 # 通过的条件数
+                    for i in range(0,len(conditionKey)):
+                        if keysInDict(v,[conditionKey[i]]) is False or v[conditionKey[i]]!=conditionVal[i]:
+                            break
+                        else:
+                            passNumber+=1
+                    # 如果通过的条件数和条件总数不一致，这条边不加进lines
+                    if passNumber!=len(conditionKey):
+                        continue
+                # 如果是线段，直接加到lines中
+                if v['edgetype']==2:
+                    line = {}
+                    line['featId'] = k
+                    line['startpnt'] = v['startpnt']
+                    line['endpnt'] = v['endpnt']
+                    lines.append(line)
+                # 如果是字，直接加到lines
+                if v['edgetype'] == 9:
+                    line = {}
+                    line['featId'] = k
+                    line['startpnt'] = v['firstcorner']
+                    line['endpnt'] = v['secondcorner']
+                    lines.append(line)
+                # 如果是圆弧，拆成两线段加入lines中
+                if v['edgetype']==3:
+                    line1 = {}
+                    line1['featId'] = k
+                    line1['startpnt'] = v['startpnt']
+                    line1['endpnt'] = v['middlepnt']
+                    lines.append(line1)
+                    line2 = {}
+                    line2['featId'] = k
+                    line2['startpnt'] = v['middlepnt']
+                    line2['endpnt'] = v['endpnt']
+                    lines.append(line2)
+                # 如果是圆，拆成四线段加入lines中
+                if v['edgetype']==5:
+                    circlex1pnt = [v['centerpnt'][0]*2-v['circlexpnt'][0],v['centerpnt'][1]*2-v['circlexpnt'][1],v['centerpnt'][2]*2-v['circlexpnt'][2]]
+                    circley1pnt = [v['centerpnt'][0]*2-v['circleypnt'][0],v['centerpnt'][1]*2-v['circleypnt'][1],v['centerpnt'][2]*2-v['circleypnt'][2]]
+                    line1 = {}
+                    line1['featId'] = k
+                    line1['startpnt'] = v['circlexpnt']
+                    line1['endpnt'] = v['circleypnt']
+                    lines.append(line1)
+                    line2 = {}
+                    line2['featId'] = k
+                    line2['startpnt'] = v['circleypnt']
+                    line2['endpnt'] = circlex1pnt
+                    lines.append(line2)
+                    line3 = {}
+                    line3['featId'] = k
+                    line3['startpnt'] = circlex1pnt
+                    line3['endpnt'] = circley1pnt
+                    lines.append(line3)
+                    line4 = {}
+                    line4['featId'] = k
+                    line4['startpnt'] = circley1pnt
+                    line4['endpnt'] = v['circlexpnt']
+                    lines.append(line4)
+                # 如果是不规则边，循环加入lines中
+                if v['edgetype']==12:
+                    for linedata in v['linedata']:
+                        line = {}
+                        line['featId'] = k
+                        line['startpnt'] = linedata['startpnt']
+                        line['endpnt'] = linedata['endpnt']
+                        lines.append(line)
+    return lines
+
+# 计算两个图形（两组线段列表）的最短距离
+# returnID表示返不返回线的featId（True为返回，False为不返回）
+# 注，调用前，先限制linesList1、linesList2不为空；如果要返回featId，先限制传入的边都有featId
+def getMinDisFrom2LinesList(linesList1,linesList2,returnID=False):
+    minDis = -1
+    id1 = ''
+    id2 = ''
+    for v1 in linesList1:
+        for v2 in linesList2:
+            line1 = [v1['startpnt'], v1['endpnt']]
+            line2 = [v2['startpnt'], v2['endpnt']]
+            # 计算两条线段的最短距离
+            dis = getTwoLineMinDisInSpace(line1, line2)
+            if minDis == -1:
+                # 如果minDis为-1，说明是第一次循环，直接把计算结果赋值给minDis
+                minDis = getTwoLineMinDisInSpace(line1,line2)
+                if returnID:
+                    id1 = v1['featId']
+                    id2 = v2['featId']
+            else:
+                # 如果计算结果比minDis小，赋值给minDis
+                if dis < minDis:
+                    minDis = dis
+                    if returnID:
+                        id1 = v1['featId']
+                        id2 = v2['featId']
+    if returnID:
+        return {'minDis': minDis, 'featId1': id1, 'featId2' : id2}
+    else:
+        return minDis
+
+# 从 spq_getcomppathscreennocoatingdata 适配器下的具体的某个丝印、喷涂保护面中提取所有边、及三个不在同一直线上的点
+# 该函数的目的是：
+# 1.取出所有边，用于判断丝印、喷涂保护会不会和其上附着物的投影边相互干涉
+# 2.取出三个不在同一直线上的点组成一个面，供丝印、喷涂保护上的附着物投影用
+def getEdgesSrfFromScreenNocoating(data):
+    # 定义边列表，用于存储丝印下的边
+    edges = []
+    # 定义面，存三个不同的点，组成一个面
+    surface = []
+    # 循环丝印下的边及属性，获取边
+    for edgeK,edgeV in data.items():
+        # 除了‘featurename’、‘sketchsurface’的就是边
+        if edgeK not in ['featurename','sketchsurface']:
+            # 存进edges
+            edges.append(edgeV)
+            # 如果surface没存满三个点
+            if len(surface)<3:
+                # 如果edgetype为2，是线段
+                if edgeV['edgetype']==2:
+                    # 循环surface，判断当前线段起点在不在surface中，不在则加入
+                    flag = False
+                    for s in surface:
+                        if fcmp(twod3Dist(edgeV['startpnt'],s),0)==0:
+                            flag = True
+                            break
+                    if flag is False:
+                        surface.append(edgeV['startpnt'])
+                    # 如果还没存满三个点，再循环surface，判断当前线段终点在不在surface中，不在则加入
+                    if len(surface)<3:
+                        flag = False
+                        for s in surface:
+                            if fcmp(twod3Dist(edgeV['endpnt'],s),0)==0:
+                                flag = True
+                                break
+                        if flag is False:
+                            surface.append(edgeV['endpnt'])
+                # 如果edgetype为3，是圆弧，直接存入圆弧的起点、中点、终点
+                if edgeV['edgetype']==3:
+                    surface.clear()
+                    surface.append(edgeV['startpnt'])
+                    surface.append(edgeV['middlepnt'])
+                    surface.append(edgeV['endpnt'])
+                # 如果edgetype为5，是圆，直接存入圆的圆心、x/y轴与圆的交点
+                if edgeV['edgetype']==5:
+                    surface.clear()
+                    surface.append(edgeV['centerpnt'])
+                    surface.append(edgeV['circlexpnt'])
+                    surface.append(edgeV['circleypnt'])
+                # 如果edgetype为12，是不规则形状
+                if edgeV['edgetype']==12:
+                    surface.clear()
+                    # 先存入第一段线段的起点、终点
+                    surface.append(edgeV['linedata'][0]['startpnt'])
+                    surface.append(edgeV['linedata'][0]['endpnt'])
+                    # 判断第二段线段的起点是否已在surface中
+                    flag = False
+                    for s in surface:
+                        if fcmp(twod3Dist(edgeV['linedata'][1]['startpnt'],s),0)==0:
+                            flag = True
+                            break
+                    # 起点不在surface中，存入起点
+                    if flag is False:
+                        surface.append(edgeV['linedata'][1]['startpnt'])
+                    # 起点在surface中，终点就不会在surface中，存入终点
+                    else:
+                        surface.append(edgeV['linedata'][1]['endpnt'])
+    result = {'edges':edges,'surface':surface}
+    return result
+
+# 从 spq_getcomppathscreennocoatingdata 适配器下的具体的某个丝印、喷涂保护面中提取所有点
+def getMinMaxXYZFromScreenNocoating(data):
+    pnts = []
+    # 循环丝印下的边及属性，获取边
+    for edgeK,edgeV in data.items():
+        # 除了‘featurename’、‘sketchsurface’的就是边
+        if edgeK not in ['featurename','sketchsurface']:
+            # 如果edgetype为2，是线段
+            if edgeV['edgetype']==2:
+                pnts.append(edgeV['startpnt'])
+                pnts.append(edgeV['endpnt'])
+            # 如果edgetype为3，是圆弧，直接存入圆弧的起点、中点、终点
+            if edgeV['edgetype']==3:
+                pnts.append(edgeV['startpnt'])
+                pnts.append(edgeV['middlepnt'])
+                pnts.append(edgeV['endpnt'])
+            # 如果edgetype为5，是圆，直接存入圆的圆心、x/y轴与圆的交点
+            if edgeV['edgetype']==5:
+                pnts.append(edgeV['centerpnt'])
+                pnts.append(edgeV['circlexpnt'])
+                pnts.append(edgeV['circleypnt'])
+            # 如果edgetype为12，是不规则形状
+            if edgeV['edgetype']==12:
+                for k,v in edgeV['linedata'].items():
+                    pnts.append(v['startpnt'])
+                    pnts.append(v['endpnt'])
+    return pnts
+
+    
+    
+    
+    
+
